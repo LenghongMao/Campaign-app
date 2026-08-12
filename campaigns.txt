@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1786512366635",
+    "name": "Campaign test1",
+    "startDate": "2026-08-11",
+    "endDate": "2026-08-12",
+    "channel": "Email"
+  },
+  {
+    "id": "1786512512988",
+    "name": "Campaign test2",
+    "startDate": "2026-08-03",
+    "endDate": "2026-08-15",
+    "channel": "Social media"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "campaignId": "1786512366635",
+    "itemNumber": "1",
+    "itemName": "Asus laptop",
+    "category": "Electronic ",
+    "description": "available in store",
+    "quantity": "68"
+  },
+  {
+    "campaignId": "1786512512988",
+    "itemNumber": "2",
+    "itemName": "Colgate ",
+    "category": "Toothpaste",
+    "description": "Available in store & online",
+    "quantity": "430"
+  },
+  {
+    "campaignId": "1786512512988",
+    "itemNumber": "21",
+    "itemName": "IPhone 17 pro max",
+    "category": "Smart Phone",
+    "description": "Available in store & online",
+    "quantity": "232"
+  },
+  {
+    "campaignId": "1786512512988",
+    "itemNumber": "13432",
+    "itemName": "Samsung Galaxy S23",
+    "category": "Smart Phone",
+    "description": "Available in store & online",
+    "quantity": "46"
+  },
+  {
+    "campaignId": "1786512366635",
+    "itemNumber": "8974594",
+    "itemName": "Johnson&Johnson baby cream ",
+    "category": "Nursery items",
+    "description": "Available in store & online",
+    "quantity": "4453"
+  }
+]
