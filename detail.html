@@ -51,17 +51,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Get Campaign ID from URL (e.g., detail.html?id=12345)
         const urlParams = new URLSearchParams(window.location.search);
         const campaignId = urlParams.get('id');
         document.getElementById('pageTitle').innerText = `Products for Campaign: ${campaignId}`;
 
-        async function loadProducts() {
-            const res = await fetch(`/api/products/${campaignId}`);
-            const products = await res.json();
+        function getProducts() {
+            return JSON.parse(localStorage.getItem('products')) || [];
+        }
+
+        function loadProducts() {
+            const allProducts = getProducts();
+            const campaignProducts = allProducts.filter(p => p.campaignId === campaignId);
+            
             const tbody = document.getElementById('productTableBody');
             tbody.innerHTML = '';
-            products.forEach(p => {
+            campaignProducts.forEach(p => {
                 tbody.innerHTML += `
                     <tr>
                         <td>${p.itemNumber}</td>
@@ -74,20 +78,19 @@
             });
         }
 
-        async function saveProduct() {
-            const data = {
-                campaignId: campaignId, // Ties product to this specific campaign
+        function saveProduct() {
+            const products = getProducts();
+            const newProduct = {
+                campaignId: campaignId,
                 itemNumber: document.getElementById('pNumber').value,
                 itemName: document.getElementById('pName').value,
                 category: document.getElementById('pCategory').value,
                 description: document.getElementById('pDesc').value,
                 quantity: document.getElementById('pQty').value
             };
-            await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+            products.push(newProduct);
+            localStorage.setItem('products', JSON.stringify(products));
+            
             document.querySelector('.btn-close').click();
             loadProducts();
         }

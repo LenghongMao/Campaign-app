@@ -49,9 +49,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        async function loadCampaigns() {
-            const res = await fetch('/api/campaigns');
-            const campaigns = await res.json();
+        function getCampaigns() {
+            return JSON.parse(localStorage.getItem('campaigns')) || [];
+        }
+
+        function loadCampaigns() {
+            const campaigns = getCampaigns();
             const tbody = document.getElementById('campaignTableBody');
             tbody.innerHTML = '';
             campaigns.forEach(c => {
@@ -68,25 +71,27 @@
             });
         }
 
-        async function saveCampaign() {
-            const data = {
+        function saveCampaign() {
+            const campaigns = getCampaigns();
+            const newCampaign = {
+                id: Date.now().toString(),
                 name: document.getElementById('cName').value,
                 startDate: document.getElementById('cStart').value,
                 endDate: document.getElementById('cEnd').value,
                 channel: document.getElementById('cChannel').value
             };
-            await fetch('/api/campaigns', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            document.querySelector('.btn-close').click(); // Close modal
-            loadCampaigns(); // Refresh list
+            campaigns.push(newCampaign);
+            localStorage.setItem('campaigns', JSON.stringify(campaigns));
+            
+            document.querySelector('.btn-close').click();
+            loadCampaigns();
         }
 
-        async function deleteCampaign(id) {
+        function deleteCampaign(id) {
             if(confirm("Delete this campaign?")) {
-                await fetch(`/api/campaigns/${id}`, { method: 'DELETE' });
+                let campaigns = getCampaigns();
+                campaigns = campaigns.filter(c => c.id !== id);
+                localStorage.setItem('campaigns', JSON.stringify(campaigns));
                 loadCampaigns();
             }
         }
