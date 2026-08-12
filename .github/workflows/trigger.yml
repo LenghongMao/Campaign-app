@@ -20,22 +20,39 @@ jobs:
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD 2>/dev/null || echo "index.html detail.html")
           
           GREP_TAG=""
+          SCOPE_MSG=""
           
+          # 1. Check for the forced override first
           if [[ "$COMMIT_MSG" == *"[Test_all]"* ]]; then
-            echo "Flag [Test_all] detected. Running all tests."
-            GREP_TAG=""
-          elif [[ "$CHANGED_FILES" == *"index.html"* && "$CHANGED_FILES" == *"detail.html"* ]]; then
-            echo "Both pages changed. Running all tests."
-            GREP_TAG=""
-          elif [[ "$CHANGED_FILES" == *"index.html"* ]]; then
-            echo "Only index changed. Tagging @index."
-            GREP_TAG="@index"
-          elif [[ "$CHANGED_FILES" == *"detail.html"* ]]; then
-            echo "Only detail changed. Tagging @detail."
-            GREP_TAG="@detail"
+            echo "grep_tag=" >> $GITHUB_ENV
+            echo "scope_msg=All Tests (Forced via [Test_all] flag)" >> $GITHUB_ENV
+            exit 0
           fi
           
-          echo "grep_tag=$GREP_TAG" >> $GITHUB_ENV
+          # 2. Dynamically build tags for ANY changed HTML files
+          for FILE in $CHANGED_FILES; do
+            if [[ "$FILE" == *.html ]]; then
+              # Get just the name (e.g., "index" from "index.html")
+              PAGE_NAME=$(basename "$FILE" .html)
+              
+              # Append it to our regex string and message string
+              GREP_TAG+="@${PAGE_NAME}|"
+              SCOPE_MSG+="${PAGE_NAME}, "
+            fi
+          done
+          
+          # 3. Clean up the trailing '|' and ', ' from the loops
+          GREP_TAG=${GREP_TAG%|}
+          SCOPE_MSG=${SCOPE_MSG%, }
+          
+          # 4. Finalize the variables
+          if [ -z "$GREP_TAG" ]; then
+            echo "grep_tag=" >> $GITHUB_ENV
+            echo "scope_msg=All Tests (No specific HTML files changed)" >> $GITHUB_ENV
+          else
+            echo "grep_tag=$GREP_TAG" >> $GITHUB_ENV
+            echo "scope_msg=Dynamic Scope: $SCOPE_MSG" >> $GITHUB_ENV
+          fi
           
       - name: Wait for GitHub Pages Deployment
         run: sleep 90
