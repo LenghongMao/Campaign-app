@@ -53,7 +53,7 @@ jobs:
           fi
           
       - name: Wait for GitHub Pages Deployment
-        run: sleep 120
+        run: sleep 30
         
       - name: Ping Test Repository
         run: |
