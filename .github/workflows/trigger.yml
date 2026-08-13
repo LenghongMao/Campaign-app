@@ -11,18 +11,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Required to compare against the previous commit
+          fetch-depth: 0 # Required to see the full history of the push
           
       - name: Analyze Commit and Set Tag
-        id: analyze
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD 2>/dev/null || echo "index.html detail.html")
           
-          # 1. Forced Override (Tests all 3: Index, Detail, and SwagLabs)
+          # Compare the state before the push vs after the push
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} 2>/dev/null || echo "index.html detail.html")
+          
+          # 1. Forced Override
           if [[ "$COMMIT_MSG" == *"[Test_all]"* ]]; then
             echo "grep_tag=" >> $GITHUB_ENV
-            echo "scope_msg=Full Suite" >> $GITHUB_ENV
+            echo "scope_msg=Full Suite (All 3 Tests)" >> $GITHUB_ENV
             exit 0
           fi
           
@@ -33,34 +34,39 @@ jobs:
           if [[ "$CHANGED_FILES" == *"index.html"* ]]; then HAS_INDEX=true; fi
           if [[ "$CHANGED_FILES" == *"detail.html"* ]]; then HAS_DETAIL=true; fi
           
-          # 3. Set exact tags and Slack messages based on combination
+          # 3. Set exact tags and Slack messages
           if [ "$HAS_INDEX" = true ] && [ "$HAS_DETAIL" = true ]; then
             echo "grep_tag=@index|@detail" >> $GITHUB_ENV
             echo "scope_msg=Campaign and Campaign Detail (@index, @detail)" >> $GITHUB_ENV
             
           elif [ "$HAS_INDEX" = true ]; then
             echo "grep_tag=@index" >> $GITHUB_ENV
-            echo "scope_msg=Campaign List (@index)" >> $GITHUB_ENV
+            echo "scope_msg=Campaign List Only (@index)" >> $GITHUB_ENV
             
           elif [ "$HAS_DETAIL" = true ]; then
             echo "grep_tag=@detail" >> $GITHUB_ENV
-            echo "scope_msg=Campaign Detail (@detail)" >> $GITHUB_ENV
+            echo "scope_msg=Campaign Detail Only (@detail)" >> $GITHUB_ENV
             
           else
-            # Default fallback if you change CSS/JS without HTML
             echo "grep_tag=" >> $GITHUB_ENV
-            echo "scope_msg=Full Suite" >> $GITHUB_ENV
+            echo "scope_msg=Full Suite (All 3 Tests)" >> $GITHUB_ENV
           fi
           
       - name: Wait for GitHub Pages Deployment
-        run: sleep 60
+        run: sleep 120
         
       - name: Ping Test Repository
         run: |
+          # Securely build the payload using standard bash variables
+          PAYLOAD=$(jq -n \
+            --arg gt "$grep_tag" \
+            --arg sm "$scope_msg" \
+            '{event_type: "run-playwright", client_payload: {grep_tag: $gt, scope_msg: $sm}}')
+            
           curl -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.TEST_TRIGGER_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/LenghongMao/campaign-app-tests/dispatches \
-            -d "{\"event_type\": \"run-playwright\", \"client_payload\": { \"grep_tag\": \"${{ env.grep_tag }}\" }}"
+            -d "$PAYLOAD"
